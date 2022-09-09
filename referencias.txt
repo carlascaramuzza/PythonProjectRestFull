@@ -1,0 +1,10 @@
+Front:
+npm i
+npm run dev
+
+NodeJS: https://nodejs.org/en/
+"React Material": https://www.radix-ui.com/docs/primitives/overview/introduction
+
+Back:
+Python Download URL: https://www.python.org/downloads/release/python-3107/
+Pycharm Download URL: https://www.jetbrains.com/pycharm/download/#section=windows
