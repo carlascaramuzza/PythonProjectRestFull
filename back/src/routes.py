@@ -4,8 +4,10 @@ from config import config
 
 from flask_mysqldb import MySQL
 
+from app import app
 
-app = Flask("Restaurante")
+
+#app = Flask("Restaurante")
 
 conexao = MySQL(app)
 
@@ -68,7 +70,7 @@ def login():
     except Exception as ex:
         return jsonify({'mensagem': "Error"})
 
-@app.route('/usuarios', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e tefone 11
+@app.route('/usuarios', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e telefone 11
 def  inserir_usuario():
     try:           
             cursor = conexao.connection.cursor()
