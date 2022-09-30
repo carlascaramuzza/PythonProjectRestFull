@@ -6,7 +6,7 @@ from flask_mysqldb import MySQL
 
 from app import app
 
-from models.entidades import Usuario
+from models.entidades import Usuario, tipo_usuario, db
 
 
 #app = Flask("Restaurante")
@@ -24,6 +24,14 @@ from models.entidades import Usuario
 #         else: 
 #             return None
 
+def cpf_validacao(cpf):
+    usuarios = Usuario.query.filter(Usuario.cpf==cpf).all()
+    if len(usuarios) < 1:
+        return 1
+    else: 
+        return None
+
+
 # @app.route('/usuarios', methods=["GET"])
 # def listar_usuarios():
 #     try:
@@ -39,10 +47,14 @@ from models.entidades import Usuario
 #     except Exception as ex:
 #         return jsonify({'mensagem': "Error"})  
 
-@app.route("/teste", methods=["GET"])
-def get_teste():
-   usuarios = Usuario.query.all()
-   return jsonify([usuario.to_json() for usuario in usuarios])
+@app.route("/usuarios", methods=["GET"])
+def listar_usuarios():
+    try:
+        #usuarios = Usuario.query.join(tipo_usuario, Usuario.tipo_usuario_id == tipo_usuario.id).all()
+        usuarios = Usuario.query.all()
+        return jsonify([usuario.to_json() for usuario in usuarios])
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"}) 
 
 # @app.route('/usuarios/<id>', methods=['GET'])
 # def listar_curso(id):
@@ -60,6 +72,18 @@ def get_teste():
 #     except Exception as ex:
 #         return jsonify({'mensagem': "Error"})
 
+
+@app.route("/usuarios/<id>", methods=["GET"])
+def listar_usuario(id):
+    try:
+        usuario = Usuario.query.get(id)
+        if usuario != None:
+            return jsonify(usuario.to_json())
+        else:
+            return jsonify({'mensagem': "Usuario não encontrado!"})  
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"}) 
+
 # @app.route('/login', methods=['POST'])
 # def login():
 #     try:
@@ -76,6 +100,19 @@ def get_teste():
 
 #     except Exception as ex:
 #         return jsonify({'mensagem': "Error"})
+
+@app.route("/login", methods=["POST"])
+def login():
+    try:
+        print(request.json['cpf'])
+        usuario = Usuario.query.filter_by(cpf=request.json['cpf'], senha=request.json['senha']).first()       
+        if usuario != None:
+            #IMPLEMENTAR---------redirecionar para Home page
+            return jsonify({'mensagem': "LOGIN REALIZADO COM SUCESSO"})
+        else:
+            return jsonify({'mensagem': "FALHA NO LOGIN: Usuario não encontrado!"}) 
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"}) 
 
 # @app.route('/usuarios', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e telefone 11
 # def  inserir_usuario():
@@ -96,11 +133,31 @@ def get_teste():
 #     except Exception as ex:
 #         return jsonify({'mensagem': "Error"})  
 
-# def pagina_nao_encontrada(error):
-#     return "<h1>Página buscada não existe</h1>"
+@app.route('/usuarios', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e telefone 11
+def  inserir_usuario():
+    try:           
+            print('pasou') 
+            usuario = Usuario(nome=request.json['nome'],username=request.json['username'],genero=request.json['genero'],
+            cpf=request.json['cpf'],telefone=request.json['telefone'],email=request.json['email'],senha=request.json['senha'], tipo_usuario_id=2)
+            print('pasou') 
+            validation = cpf_validacao(request.json['cpf'])
+            print('pasouuuuuuuu') 
+            if validation == 1:
+                print(validation)      
+                db.session.add(usuario)  
+                db.session.commit()
+                print('pasou commit') 
+                return jsonify({'mensagem': "CADASTRO REALIZADO COM SUCESSO"})
+            else: 
+                return jsonify({'mensagem': "CPF JÁ EXISTENTE! POR FAVOR INSIRA OUTRO CPF."})
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"})  
+
+def pagina_nao_encontrada(error):
+    return "<h1>Página buscada não existe</h1>"
    
 
 
 #app.config.from_object(config['development'])   
-#app.register_error_handler(404, pagina_nao_encontrada)
+app.register_error_handler(404, pagina_nao_encontrada)
 app.run()

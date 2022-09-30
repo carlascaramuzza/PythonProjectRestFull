@@ -1,3 +1,4 @@
+from enum import auto
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from app import app
@@ -6,36 +7,40 @@ from app import app
 db = SQLAlchemy(app)
 
 class Usuario(db.Model):
-    id = db.Column(db.Integer(), primary_key = True)
+    id = db.Column(db.Integer(), primary_key = True, autoincrement=True)
+    username = db.Column(db.String(20))
     nome = db.Column(db.String(50))
     genero = db.Column(db.String(1))
     cpf = db.Column(db.String(11))
     telefone = db.Column(db.Integer())
     email = db.Column(db.String(50))
-    senha = db.Column(db.String(50))
-    #tipoUsuario = db.relationship('TipoUsuario', backref = 'usuario')
+    senha = db.Column(db.String(50))    
+    tipo_usuario_id = db.Column(db.Integer(), db.ForeignKey('tipo_usuario.id'))
+    tipo_usuario = db.relationship("tipo_usuario", backref="Usuario")
     #pedidoId = db.Column(db.Integer(), db.ForeignKey('pedido.id'))# aquia   a mesma coisa dos outros tabela 1 : * 1 não recebe fk da muitos
 
     def to_json(self):
         return {
-            'id': self.id,
+            #'id': self.id,
             'nome': self.nome,
+            'username': self.username,
             'genero': self.genero,
             'cpf': self.cpf,
             'telefone': self.telefone,
             'email': self.email,
             'senha' : self.senha,
-            #'tipoUsuario' : self.tipoUsuario,
-            #'pedidoId' : self.pedidoId
+            'tipo_usuario' : self.tipo_usuario.nome
         }
 
  #ENDERECO
     
 
-class TipoUsuario(db.Model):
+
+class tipo_usuario(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    nome = db.Column(db.String(100))
+    nome = db.Column(db.String(100)) 
     #usuarioId = db.Column(db.Integer, db.ForeignKey('usuario.id'))# aquia   a mesma coisa dos outros tabela 1 : * 1 não recebe fk da muitos
+    
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key = True)

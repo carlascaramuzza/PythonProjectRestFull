@@ -4,6 +4,8 @@ from config import DevelopmentConfig as dbConfig
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = dbConfig.SECRET_KEY
+app.config['DEBUG'] = dbConfig.DEBUG
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://' + dbConfig.MYSQL_USER + ':' + dbConfig.MYSQL_PASSWORD + '@' + dbConfig.MYSQL_HOST + '/' + dbConfig.MYSQL_DB
 
