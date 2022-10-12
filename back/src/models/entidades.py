@@ -36,39 +36,58 @@ class tipo_usuario(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     nome = db.Column(db.String(100)) 
     #usuarioId = db.Column(db.Integer, db.ForeignKey('usuario.id'))# aquia   a mesma coisa dos outros tabela 1 : * 1 não recebe fk da muitos
-    
 
-# class Pedido(db.Model):
-#     id = db.Column(db.Integer, primary_key = True)
-#     data_pedido = db.Column(db.DateTime)
-#     delivery = db.Column(db.Integer)
-#     valor_total = db.Column(db.Float)
-#     observacoes = db.Column(db.String(50))
-#     status_pedido_id = db.Column(db.Integer(), db.ForeignKey('status_pedido.id'))
-#     status_pedido = db.relationship("status_pedido", backref="Pedido")
-#     usuario_id = db.Column(db.Integer(), db.ForeignKey('usuario.id'))
-#     usuario = db.relationship("usuario", backref="Pedido")
-#     endereco_id = db.Column(db.Integer(), db.ForeignKey('endereco.id'))
-#     endereco = db.relationship("endereco", backref="Pedido")        
-#    # statusPedido = db.relationship('StatusPedido', backref = 'pedido')
-#     #itemPedido = db.Column(db.Integer, db.ForeignKey('itemPedido.id')) #porque foi criado esse ?? o relacionamento é 1:* é a tabela de item q recebe o id..pq pode ter mais de 1 item
-
-#     def to_json(self):
-#         return {
-#             #'id': self.id,
-#             'data_pedido': self.nome,
-#             'delivery': self.username,
-#             'valor_total': self.genero,
-#             'observacoes': self.cpf,
-#             'status_pedido': self.status_pedido.status_pedido,
-#             'usuario': self.usuario.nome,
-#             'endereco': self.endereco.endereco
-            
-#         }    
-
-class StatusPedido(db.Model):
+class Endereco(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    statusPedido = db.Column(db.String(50))
+    endereco = db.Column(db.String(255)) 
+    bairro = db.Column(db.String(255))  
+    numero = db.Column(db.Integer)  
+    usuario_id = db.Column(db.Integer(), db.ForeignKey('usuario.id'))
+    usuario = db.relationship("Usuario", backref="Endereco") 
+
+    def to_json(self):
+        return {
+            #'id': self.id,
+            'endereco': self.endereco,
+            'bairro': self.bairro,
+            'numero': self.numero,           
+            'usuario_id': self.usuario.id,
+            'usuario': self.usuario.nome
+        }    
+
+
+class Pedido(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    data_pedido = db.Column(db.DateTime)
+    delivery = db.Column(db.Integer)
+    valor_total = db.Column(db.Float)
+    observacoes = db.Column(db.String(50))
+    status_pedido_id = db.Column(db.Integer(), db.ForeignKey('status_pedido.id'))
+    status_pedido = db.relationship("Status_pedido", backref="Pedido")
+    usuario_id = db.Column(db.Integer(), db.ForeignKey('usuario.id'))
+    usuario = db.relationship("Usuario", backref="Pedido")
+    endereco_id = db.Column(db.Integer(), db.ForeignKey('endereco.id'))
+    endereco = db.relationship("Endereco", backref="Pedido")        
+ 
+    def to_json(self):
+        return {
+            #'id': self.id,
+            'data_pedido': self.data_pedido,
+            'delivery': self.delivery,
+            'valor_total': self.valor_total,
+            'observacoes': self.observacoes,
+            'status_pedido_id': self.status_pedido.id,
+            'status_pedido': self.status_pedido.status_pedido,
+            'usuario_id': self.usuario.id,
+            'usuario': self.usuario.nome,
+            'endereco_id': self.endereco.id,
+            'endereco': self.endereco.endereco
+            
+        }    
+
+class Status_pedido(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    status_pedido = db.Column(db.String(50))
    # pedidoId = db.Column(db.Integer(), db.ForeignKey('pedido.id'))# mesma coisa eh data 1:* a tabela 1 não recebe o Id de muitos.. é uam taberla de apoio
 
 class ItemPedido(db.Model):
