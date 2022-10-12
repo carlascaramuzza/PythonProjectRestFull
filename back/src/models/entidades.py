@@ -92,9 +92,32 @@ class Produto(db.Model):
 
 
 
-#MESA
+class Mesa(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    numero = db.Column(db.Integer)
+    qtd_lugares = db.Column(db.Integer)
+    area_interna = db.Column(db.Integer)
 
-#RESERVA MESA
+    
+    def to_json_mesa(self):
+        return {
+            'numero': self.numero,
+            'qtd_lugares': self.qtd_lugares,
+            'area_interna': self.area_interna
+        }
+
+class reserva_mesa(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    mesa_id = db.Column(db.Integer, db.ForeignKey('mesa.id'))
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    data_reserva = db.Column(db.Date)
+
+    def to_json_reserva(self):
+        return {
+            'mesa_id': self.mesa_id,
+            'usuario_id': self.usuario_id,
+            'data_reserva': self.data_reserva
+        }
 
 
 

@@ -6,7 +6,7 @@ from flask_mysqldb import MySQL
 
 from app import app 
 
-from models.entidades import Usuario, tipo_usuario, db
+from models.entidades import Mesa, Usuario, reserva_mesa, tipo_usuario, db
 
 import jwt
 
@@ -182,23 +182,72 @@ def  inserir_usuario():
 # 
 
 
-@app.route('/pedidos', methods=['POST'])  
-def  inserir_pedidos():
-    try:           
-            print('pasouuuu') 
-            pedido = Pedido(data_pedido=request.json['data_pedido'],delivery=request.json['delivery'],valor_total=request.json['valor_total'],
-            observacoes=request.json['observacoes'],status_pedido=request.json['status_pedido'],usuario=request.json['usuario'],endereco=request.json['endereco'])
-            print('pasou') 
-            if pedido != None:
-                print(pedido)      
-                db.session.add(pedido)  
-                db.session.commit()
-                print('pasou commit') 
-                return jsonify({'mensagem': "PEDIDO REALIZADO COM SUCESSO"})
-            else: 
-                return jsonify({'mensagem': "ERRO NO PEDIDO"})
+# @app.route('/pedidos', methods=['POST'])  
+# def  inserir_pedidos():
+#     try:           
+#             print('pasouuuu') 
+#             pedido = Pedido(data_pedido=request.json['data_pedido'],delivery=request.json['delivery'],valor_total=request.json['valor_total'],
+#             observacoes=request.json['observacoes'],status_pedido=request.json['status_pedido'],usuario=request.json['usuario'],endereco=request.json['endereco'])
+#             print('pasou') 
+#             if pedido != None:
+#                 print(pedido)      
+#                 db.session.add(pedido)  
+#                 db.session.commit()
+#                 print('pasou commit') 
+#                 return jsonify({'mensagem': "PEDIDO REALIZADO COM SUCESSO"})
+#             else: 
+#                 return jsonify({'mensagem': "ERRO NO PEDIDO"})
+#     except Exception as ex:
+#         return jsonify({'mensagem': "Error"})    
+
+@app.route("/mesas", methods=["GET"])
+#@jwt_required
+def listar_mesas():
+    try:
+        #usuarios = Usuario.query.join(tipo_usuario, Usuario.tipo_usuario_id == tipo_usuario.id).all()
+        mesas = Mesa.query.all()
+        return jsonify([mesa.to_json_mesa() for mesa in mesas])
     except Exception as ex:
-        return jsonify({'mensagem': "Error"})    
+        return jsonify({'mensagem': "Error"}) 
+
+
+@app.route("/reservamesas", methods=["GET"])
+#@jwt_required
+def listar_reservamesas():
+    try:
+        #usuarios = Usuario.query.join(tipo_usuario, Usuario.tipo_usuario_id == tipo_usuario.id).all()
+        reservas = reserva_mesa.query.all()
+        return jsonify([reserva.to_json_reserva() for reserva in reservas])
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"})         
+
+@app.route('/reservamesas', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e telefone 11
+def  reservar_mesa():
+    try:     
+        #lembrar no front q o usuario_id pegar do cara logado       
+        reserva = reserva_mesa(mesa_id=request.json['mesa_id'],usuario_id=request.json['usuario_id'],data_reserva=request.json['data_reserva'])
+        validacao = validacao_reserva(reserva.data_reserva,reserva.mesa_id)
+        if validacao == 1:    
+            db.session.add(reserva)  
+            db.session.commit()
+            return jsonify({'mensagem': "RESERVA REALIZADA COM SUCESSO!"})
+        else:
+            return jsonify({'mensagem': "MESA JÁ RESERVADA!"})
+           
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"})  
+
+def validacao_reserva(data, mesa):
+    reservas = reserva_mesa.query.filter(reserva_mesa.data_reserva==data, reserva_mesa.mesa_id==mesa).all()
+    if len(reservas) < 1:
+        return 1
+    else: 
+        return None
+
+
+
+
+
 
 def pagina_nao_encontrada(error):
     return "<h1>Página buscada não existe</h1>"

@@ -21,7 +21,9 @@ def jwt_required(f):
         try:
             token_puro = token.replace("Bearer ", "")            
             decoded = jwt.decode(token_puro, dbConfig.SECRET_KEY, algorithms=["HS256"])
+            print(decoded)
             usuario_logado = Usuario.query.get(decoded['id'])
+            
         except:
             return jsonify({"error": " O Token é Inválido."}), 403
 
