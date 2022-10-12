@@ -1,12 +1,18 @@
 from flask import Flask, request, jsonify
 
-from config import config
+from config import config as dbConfig
 
 from flask_mysqldb import MySQL
 
-from app import app
+from app import app 
 
 from models.entidades import Usuario, tipo_usuario, db
+
+import jwt
+
+from datetime import datetime, timedelta
+
+from authentication import jwt_required
 
 
 #app = Flask("Restaurante")
@@ -31,7 +37,6 @@ def cpf_validacao(cpf):
     else: 
         return None
 
-
 # @app.route('/usuarios', methods=["GET"])
 # def listar_usuarios():
 #     try:
@@ -48,7 +53,8 @@ def cpf_validacao(cpf):
 #         return jsonify({'mensagem': "Error"})  
 
 @app.route("/usuarios", methods=["GET"])
-def listar_usuarios():
+@jwt_required
+def listar_usuarios(current_user):
     try:
         #usuarios = Usuario.query.join(tipo_usuario, Usuario.tipo_usuario_id == tipo_usuario.id).all()
         usuarios = Usuario.query.all()
@@ -74,15 +80,20 @@ def listar_usuarios():
 
 
 @app.route("/usuarios/<id>", methods=["GET"])
-def listar_usuario(id):
-    try:
-        usuario = Usuario.query.get(id)
-        if usuario != None:
-            return jsonify(usuario.to_json())
-        else:
-            return jsonify({'mensagem': "Usuario não encontrado!"})  
-    except Exception as ex:
-        return jsonify({'mensagem': "Error"}) 
+@jwt_required
+def listar_usuario(current_user, id):
+    if current_user.id == int(id) or current_user.tipo_usuario.nome == "administrador":
+        try:
+            usuario = Usuario.query.get(id)
+            if usuario != None:
+                return jsonify(usuario.to_json())
+            else:
+                return jsonify({'mensagem': "Usuario não encontrado!"})  
+        except Exception as ex:
+            return jsonify({'mensagem': "Error"}) 
+    else:
+        return jsonify({'mensagem': "Voce não tem permissão para ver dados de outros usuários!"}), 403
+
 
 # @app.route('/login', methods=['POST'])
 # def login():
@@ -107,12 +118,18 @@ def login():
         print(request.json['cpf'])
         usuario = Usuario.query.filter_by(cpf=request.json['cpf'], senha=request.json['senha']).first()       
         if usuario != None:
-            #IMPLEMENTAR---------redirecionar para Home page
-            return jsonify({'mensagem': "LOGIN REALIZADO COM SUCESSO"})
+            payload = {
+                "id": usuario.id,
+                "exp": datetime.utcnow() + timedelta(minutes=30)
+            }
+            token = jwt.encode(payload, app.config['SECRET_KEY'])
+
+            return jsonify({"token": token, 'mensagem': "LOGIN REALIZADO COM SUCESSO"})            
+            #IMPLEMENTAR---------redirecionar para Home page          
         else:
             return jsonify({'mensagem': "FALHA NO LOGIN: Usuario não encontrado!"}) 
     except Exception as ex:
-        return jsonify({'mensagem': "Error"}) 
+        return str(ex) 
 
 # @app.route('/usuarios', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e telefone 11
 # def  inserir_usuario():
@@ -152,6 +169,36 @@ def  inserir_usuario():
                 return jsonify({'mensagem': "CPF JÁ EXISTENTE! POR FAVOR INSIRA OUTRO CPF."})
     except Exception as ex:
         return jsonify({'mensagem': "Error"})  
+
+
+# @app.route("/pedidos", methods=["GET"])
+# #@jwt_required
+# def listar_pedidos():
+#     try:
+#         pedidos = Usuario.query.all()
+#         return jsonify([pedido.to_json() for pedido in pedidos])
+#     except Exception as ex:
+#         return jsonify({'mensagem': "Error"})       
+# 
+
+
+@app.route('/pedidos', methods=['POST'])  
+def  inserir_pedidos():
+    try:           
+            print('pasouuuu') 
+            pedido = Pedido(data_pedido=request.json['data_pedido'],delivery=request.json['delivery'],valor_total=request.json['valor_total'],
+            observacoes=request.json['observacoes'],status_pedido=request.json['status_pedido'],usuario=request.json['usuario'],endereco=request.json['endereco'])
+            print('pasou') 
+            if pedido != None:
+                print(pedido)      
+                db.session.add(pedido)  
+                db.session.commit()
+                print('pasou commit') 
+                return jsonify({'mensagem': "PEDIDO REALIZADO COM SUCESSO"})
+            else: 
+                return jsonify({'mensagem': "ERRO NO PEDIDO"})
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"})    
 
 def pagina_nao_encontrada(error):
     return "<h1>Página buscada não existe</h1>"
