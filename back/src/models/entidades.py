@@ -110,13 +110,15 @@ class reserva_mesa(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     mesa_id = db.Column(db.Integer, db.ForeignKey('mesa.id'))
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
+    usuario = db.relationship("Usuario", backref="reserva_mesa")
     data_reserva = db.Column(db.Date)
 
     def to_json_reserva(self):
         return {
             'mesa_id': self.mesa_id,
             'usuario_id': self.usuario_id,
-            'data_reserva': self.data_reserva
+            'data_reserva': self.data_reserva,
+            'usuario': self.usuario.nome
         }
 
 

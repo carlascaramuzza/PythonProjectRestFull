@@ -212,20 +212,29 @@ def listar_mesas():
 
 
 @app.route("/reservamesas", methods=["GET"])
-#@jwt_required
-def listar_reservamesas():
-    try:
-        #usuarios = Usuario.query.join(tipo_usuario, Usuario.tipo_usuario_id == tipo_usuario.id).all()
-        reservas = reserva_mesa.query.all()
-        return jsonify([reserva.to_json_reserva() for reserva in reservas])
-    except Exception as ex:
-        return jsonify({'mensagem': "Error"})         
+@jwt_required
+def listar_reservamesas(current_user):
+    if current_user.tipo_usuario.nome == "administrador":
+        print('adm')
+        try:
+            reservas = reserva_mesa.query.all()
+            return jsonify([reserva.to_json_reserva() for reserva in reservas])
+        except Exception as ex:
+            return jsonify({'mensagem': "Error"}), 500
+    else:
+        try:
+            reservas = reserva_mesa.query.filter(reserva_mesa.usuario_id==current_user.id).all()
+            print(reservas)
+            return jsonify([reserva.to_json_reserva() for reserva in reservas])
+        except Exception as ex:
+            return jsonify({'mensagem': "Error"}), 500
 
-@app.route('/reservamesas', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e telefone 11
-def  reservar_mesa():
-    try:     
-        #lembrar no front q o usuario_id pegar do cara logado       
-        reserva = reserva_mesa(mesa_id=request.json['mesa_id'],usuario_id=request.json['usuario_id'],data_reserva=request.json['data_reserva'])
+
+@app.route('/reservamesas', methods=['POST']) 
+@jwt_required
+def  reservar_mesa(current_user):
+    try: 
+        reserva = reserva_mesa(mesa_id=request.json['mesa_id'],usuario_id=current_user.id,data_reserva=request.json['data_reserva'])
         validacao = validacao_reserva(reserva.data_reserva,reserva.mesa_id)
         if validacao == 1:    
             db.session.add(reserva)  
