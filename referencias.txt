@@ -1,10 +1,14 @@
-Front:
+Front (executar no terminal na pasta front):
 npm i
 npm run dev
 
 NodeJS: https://nodejs.org/en/
 "React Material": https://www.radix-ui.com/docs/primitives/overview/introduction
+https://mui.com/pt/material-ui/
+Estruturação de pastas: https://medium.com/reactbrasil/react-estruturando-projetos-e-nomeando-componentes-b62ddad69a11
 
 Back:
 Python Download URL: https://www.python.org/downloads/release/python-3107/
 Pycharm Download URL: https://www.jetbrains.com/pycharm/download/#section=windows
+
+Protótipo: https://www.figma.com/proto/mKKVu2I0rsOzBsmOwbSxcD/Florinda's-Restaurant?node-id=42%3A2978&scaling=contain&page-id=0%3A1&starting-point-node-id=1%3A3
