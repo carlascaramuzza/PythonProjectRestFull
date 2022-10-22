@@ -21,7 +21,7 @@ class Usuario(db.Model):
 
     def to_json(self):
         return {
-            #'id': self.id,
+            'id': self.id,
             'nome': self.nome,
             'username': self.username,
             'genero': self.genero,
@@ -47,7 +47,7 @@ class Endereco(db.Model):
 
     def to_json(self):
         return {
-            #'id': self.id,
+            'id': self.id,
             'endereco': self.endereco,
             'bairro': self.bairro,
             'numero': self.numero,           
@@ -71,7 +71,7 @@ class Pedido(db.Model):
  
     def to_json(self):
         return {
-            #'id': self.id,
+            'id': self.id,
             'data_pedido': self.data_pedido,
             'delivery': self.delivery,
             'valor_total': self.valor_total,
@@ -90,13 +90,28 @@ class Status_pedido(db.Model):
     status_pedido = db.Column(db.String(50))
    # pedidoId = db.Column(db.Integer(), db.ForeignKey('pedido.id'))# mesma coisa eh data 1:* a tabela 1 não recebe o Id de muitos.. é uam taberla de apoio
 
-class ItemPedido(db.Model):
+class Item_Pedido(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    #pedidoId = db.relationship('Pedido', backref = 'itemPedido')
-    #produtoId = db.relationship('Produto', backref = 'itemPedido')
-    valorUnitario = db.Column(db.Float)
-    quantidade = db.Column(db.Integer)
-    valorTotal = db.Column(db.Float)
+    pedido_id = db.Column(db.Integer(), db.ForeignKey('pedido.id'))
+    pedido = db.relationship("Pedido", backref="Item_Pedido")
+    produto_id = db.Column(db.Integer(), db.ForeignKey('produto.id'))
+    produto = db.relationship("Produto", backref="Item_Pedido")
+    valor_unitario = db.Column(db.Float)
+    qtd = db.Column(db.Integer)
+    valor_total_itens = db.Column(db.Float)
+    
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'pedido_id': self.pedido_id,
+            'produto_id': self.produto_id,
+            'produto': self.produto,
+            'valor_unitario': self.valor_unitario,
+            'qtd': self.qtd,
+            'valor_total_itens' : self.valor_total_itens
+        }
+
 
  
 #CATEGORIA
