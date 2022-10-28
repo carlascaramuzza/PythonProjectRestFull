@@ -1,6 +1,7 @@
 from enum import auto
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import JSON
 from app import app
 
 #app = Flask(__name__)
@@ -17,8 +18,6 @@ class Usuario(db.Model):
     senha = db.Column(db.String(50))    
     tipo_usuario_id = db.Column(db.Integer(), db.ForeignKey('tipo_usuario.id'))
     tipo_usuario = db.relationship("tipo_usuario", backref="Usuario")
-    #pedidoId = db.Column(db.Integer(), db.ForeignKey('pedido.id'))# aquia   a mesma coisa dos outros tabela 1 : * 1 não recebe fk da muitos
-
     def to_json(self):
         return {
             'id': self.id,
@@ -34,8 +33,7 @@ class Usuario(db.Model):
 
 class tipo_usuario(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    nome = db.Column(db.String(100)) 
-    #usuarioId = db.Column(db.Integer, db.ForeignKey('usuario.id'))# aquia   a mesma coisa dos outros tabela 1 : * 1 não recebe fk da muitos
+    nome = db.Column(db.String(100))     
 
 class Endereco(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -67,7 +65,8 @@ class Pedido(db.Model):
     usuario_id = db.Column(db.Integer(), db.ForeignKey('usuario.id'))
     usuario = db.relationship("Usuario", backref="Pedido")
     endereco_id = db.Column(db.Integer(), db.ForeignKey('endereco.id'))
-    endereco = db.relationship("Endereco", backref="Pedido")        
+    endereco = db.relationship("Endereco", backref="Pedido")     
+    itens = JSON
  
     def to_json(self):
         return {
@@ -81,48 +80,68 @@ class Pedido(db.Model):
             'usuario_id': self.usuario.id,
             'usuario': self.usuario.nome,
             'endereco_id': self.endereco.id,
+            'endereco': self.endereco.endereco,
+            'itens': self.itens            
+        } 
+    def to_json_list(self):
+        return {
+            'id': self.id,
+            'data_pedido': self.data_pedido,
+            'delivery': self.delivery,
+            'valor_total': self.valor_total,
+            'observacoes': self.observacoes,
+            'status_pedido_id': self.status_pedido.id,
+            'status_pedido': self.status_pedido.status_pedido,
+            'usuario_id': self.usuario.id,
+            'usuario': self.usuario.nome,
+            'endereco_id': self.endereco.id,
             'endereco': self.endereco.endereco
-            
         }    
+        
 
 class Status_pedido(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     status_pedido = db.Column(db.String(50))
-   # pedidoId = db.Column(db.Integer(), db.ForeignKey('pedido.id'))# mesma coisa eh data 1:* a tabela 1 não recebe o Id de muitos.. é uam taberla de apoio
 
-class Item_Pedido(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
-    pedido_id = db.Column(db.Integer(), db.ForeignKey('pedido.id'))
-    pedido = db.relationship("Pedido", backref="Item_Pedido")
-    produto_id = db.Column(db.Integer(), db.ForeignKey('produto.id'))
-    produto = db.relationship("Produto", backref="Item_Pedido")
+
+class item_pedido(db.Model):
+    pedido_id = db.Column(db.Integer(), db.ForeignKey('pedido.id'), primary_key = True)
+    pedido = db.relationship("Pedido", backref="item_pedido")
+    produto_id = db.Column(db.Integer(), db.ForeignKey('produto.id'), primary_key = True)
+    produto = db.relationship("Produto", backref="item_pedido")
     valor_unitario = db.Column(db.Float)
     qtd = db.Column(db.Integer)
-    valor_total_itens = db.Column(db.Float)
-    
+    valor_total_itens = db.Column(db.Float)  
 
     def to_json(self):
         return {
-            'id': self.id,
             'pedido_id': self.pedido_id,
             'produto_id': self.produto_id,
-            'produto': self.produto,
-            'valor_unitario': self.valor_unitario,
+            'produto': self.produto.nome,
+            'valor_unitario': self.produto.preco,
             'qtd': self.qtd,
             'valor_total_itens' : self.valor_total_itens
         }
-
-
  
-#CATEGORIA
-
+class Categoria(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    nome = db.Column(db.String(50))
 
 class Produto(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     nome = db.Column(db.String(255))
     preco = db.Column(db.Float)
-    categoria = db.Column(db.String(255))
-    #itemPedido = db.Column(db.Integer, db.ForeignKey('itemPedido.id')) #a mesma coisa aqui????
+    categoria_id =db.Column(db.Integer(), db.ForeignKey('categoria.id'))
+    categoria = db.relationship("Categoria", backref="Produto")
+    
+    def to_json(self):
+        return {
+            'id': self.id,
+            'nome': self.nome,
+            'preco': self.preco,
+            'categoria_id': self.categoria_id,
+            'categoria': self.categoria.nome
+        }
 
 
 

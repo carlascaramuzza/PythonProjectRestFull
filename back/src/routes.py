@@ -1,4 +1,4 @@
-import re
+
 from flask import Flask, request, jsonify
 from sqlalchemy import delete
 
@@ -8,7 +8,7 @@ from flask_mysqldb import MySQL
 
 from app import app 
 
-from models.entidades import Mesa, Pedido, Usuario, reserva_mesa, tipo_usuario, db
+from models.entidades import item_pedido, Mesa, Pedido, Usuario, reserva_mesa, tipo_usuario, Produto, db
 
 import jwt
 
@@ -66,7 +66,25 @@ def  inserir_usuario():
             else: 
                 return jsonify({'mensagem': "CPF JÁ EXISTENTE! POR FAVOR INSIRA OUTRO CPF."})
     except Exception as ex:
-        return jsonify({'mensagem': "Error"})        
+        return jsonify({'mensagem': "Error"})   
+
+
+@app.route("/usuarios/<id>", methods=["DELETE"])
+@jwt_required
+def deletar_usuario(id,current_user):
+    if current_user.tipo_usuario.nome == "administrador":
+        try:
+            usuario = Usuario.query.get(id)
+            if usuario != None:    
+                db.session.delete(usuario)  
+                db.session.commit()
+                return jsonify({'mensagem': "USUARIO DELETADO COM SUCESSO!"})
+            else:
+                return jsonify({'mensagem': "ESTE USUARIO NÃO EXISTE!"})
+        except Exception as ex:
+            return jsonify({'mensagem': "Error"}) 
+    else:
+        return jsonify({'mensagem': "SEM PERMISSÃO"}), 403      
 
 #LOGIN====================================================================================================
 @app.route("/login", methods=["POST"])
@@ -88,6 +106,76 @@ def login():
     except Exception as ex:
         return str(ex)  
 
+
+#PRODUTOS====================================================================================================        
+@app.route("/produtos", methods=["GET"])
+@jwt_required
+def listar_produtos(current_user):    
+        try:
+            produtos = Produto.query.all()
+            return jsonify([produto.to_json() for produto in produtos])
+        except Exception as ex:
+            return str(ex) 
+
+@app.route("/produtos/<id>", methods=["PUT"])
+@jwt_required
+def atualizar_produtos(id, current_user):    
+    if current_user.tipo_usuario.nome == "administrador":
+        try:  
+                produto = Produto.query.get(id)              
+                nome = request.json['nome']
+                preco = request.json['preco']
+                categoria_id = request.json['categoria_id']
+                if nome != None or preco != None or categoria_id != None:
+                    produto.nome = nome
+                    produto.preco = preco
+                    produto.categoria_id = categoria_id
+                    db.session.commit()
+                    return jsonify({'mensagem': "PRODUTO ALTERADO COM SUCESSO"})
+                else: 
+                    return jsonify({'mensagem': "ERRO NA ALTERAÇÃO DO PRODUTO!"})
+        except Exception as ex:
+            return str(ex)   
+    else:
+        return jsonify({'mensagem': "SEM PERMISSÃO"}), 403  
+
+
+@app.route("/produtos", methods=["POST"])
+@jwt_required
+def cadastrar_produto(current_user):
+    if current_user.tipo_usuario.nome == "administrador":
+        try:
+            produto = Produto(nome=request.json['nome'], preco=request.json['preco'],categoria_id=request.json['categoria_id'])
+            if produto != None:               
+                db.session.add(produto)  
+                db.session.commit()
+                return jsonify({'mensagem': "CADASTRO DE PRODUTO REALIZADO COM SUCESSO"})
+            else: 
+                return jsonify({'mensagem': "ERRO NO PRODUTO"})
+        except Exception as ex:
+            return str(ex)  
+    else:
+        return jsonify({'mensagem': "SEM PERMISSÃO"}), 403  
+
+@app.route("/produtos/<id>", methods=["DELETE"])
+@jwt_required
+def deletar_produto(id,current_user):
+    if current_user.tipo_usuario.nome == "administrador":
+        try:
+            produto = Produto.query.get(id)
+            if produto != None:    
+                db.session.delete(produto)  
+                db.session.commit()
+                return jsonify({'mensagem': "PRODUTO DELETADO COM SUCESSO!"})
+            else:
+                return jsonify({'mensagem': "ESTE PRODUTO NÃO EXISTE!"})
+        except Exception as ex:
+            return jsonify({'mensagem': "Error"}) 
+    else:
+        return jsonify({'mensagem': "SEM PERMISSÃO"}), 403      
+        
+
+
 #PEDIDOS======================================================================================================
 @app.route("/pedidos", methods=["GET"])
 @jwt_required
@@ -95,32 +183,56 @@ def listar_pedidos(current_user):
     if current_user.tipo_usuario.nome == "administrador":
         try:
             pedidos = Pedido.query.all()
-            return jsonify([pedido.to_json() for pedido in pedidos])
+            print(pedidos)
+            return jsonify([pedido.to_json_list() for pedido in pedidos])
         except Exception as ex:
             return jsonify({'mensagem': "Error"})  
     else:
         try:
             pedidos = Pedido.query.filter(Pedido.usuario_id==current_user.id).all()           
-            return jsonify([pedido.to_json() for pedido in pedidos])
+            return jsonify([pedido.to_json_list() for pedido in pedidos])
         except Exception as ex:
-            return str(ex)  
+            return str(ex) 
 
+@app.route("/itens_pedido/<pedido_id>", methods=["GET"])
+@jwt_required
+def listar_itens_pedido(pedido_id, current_user):    
+        try:
+            itens = item_pedido.query.filter(item_pedido.pedido_id == pedido_id).all()
+            print(itens)
+            return jsonify([item.to_json() for item in itens])
+        except Exception as ex:
+            return str(ex) 
 
-@app.route('/pedidos', methods=['POST']) 
+@app.route('/pedidos', methods=['POST']) #LEMBRANDO QUE O VALOR TOTAL DO PEDIDO TEM Q SER CALCULADO NO FRONT PARA RECEBER NO BODY
 @jwt_required 
 def  inserir_pedidos(current_user):
     try:  
-            pedido = Pedido(data_pedido=request.json['data_pedido'],delivery=request.json['delivery'],valor_total=request.json['valor_total'],
-            observacoes=request.json['observacoes'],status_pedido_id=1,usuario_id=current_user.id,endereco_id=request.json['endereco_id'])
-           
-            if pedido != None:
-                print(pedido)      
-                db.session.add(pedido)  
+       
+        pedido = Pedido(data_pedido=request.json['data_pedido'],delivery=request.json['delivery'],valor_total=request.json['valor_total'],
+            observacoes=request.json['observacoes'],status_pedido_id=1,usuario_id=current_user.id,endereco_id=request.json['endereco_id'],
+            itens=request.json['itens'])
+
+        db.session.add(pedido) 
+        db.session.commit()
+        db.session.flush()
+
+        itens = []
+        for i in pedido.itens:  
+            print('entrou')   
+            print(i)   
+            itens.append(item_pedido(pedido_id=pedido.id,produto_id=i['produto_id'],valor_unitario=i['valor_unitario'],
+                qtd=i['qtd'],valor_total_itens=i['valor_total_itens']))
+
+        if itens != None:
+            for item in itens:
+                db.session.add(item)
                 db.session.commit()
-                print('pasou commit') 
-                return jsonify({'mensagem': "PEDIDO REALIZADO COM SUCESSO"})
-            else: 
-                return jsonify({'mensagem': "ERRO NO PEDIDO"})
+        else: 
+            return jsonify({'mensagem': "NÃO HÁ ITENS NO PEDIDO"})             
+
+        return jsonify({'mensagem': "PEDIDO REALIZADO COM SUCESSO"})               
+
     except Exception as ex:
         return str(ex)    
 
@@ -306,12 +418,11 @@ def cpf_validacao(cpf):
     if len(usuarios) < 1:
         return 1
     else: 
-        return None        
+        return None
 
 
 def pagina_nao_encontrada(error):
-    return "<h1>Página buscada não existe</h1>"
-   
+    return "<h1>Página buscada não existe</h1>"  
 
 
 #app.config.from_object(config['development'])   
