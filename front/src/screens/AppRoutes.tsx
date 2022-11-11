@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import Navegacao from "../components/Navegacao";
+import TelaCadastroUsuario from "./Cadastro/Usuario";
 import TelaCardapio from "./Cardapio";
 import TelaContato from "./Contato";
 import TelaHome from "./Home";
@@ -22,7 +23,7 @@ export function AppRoutes(){
                 <Route path="contato" element={<TelaContato />} />
             </Route>
             <Route path="/login" element={<TelaLogin />}/>
-            <Route path="/cadastro" element={<TelaLogin />}/>
+            <Route path="/cadastro" element={<TelaCadastroUsuario />}/>
         </Routes>
     );
 }

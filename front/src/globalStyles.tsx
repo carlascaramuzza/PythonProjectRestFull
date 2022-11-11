@@ -8,12 +8,26 @@ function GlobalStyle(){
                 body {
                     margin: 0;
                     padding: 0;
-                    height: 100%;
-                    width: 100%;
+                    height: 100vh;
+                    width: 100vw;
                     font-family: 'Josefin Sans, Allison';
                     background-image: url(${Background});
                     background-repeat: no-repeat;
                     background-size: cover;
+                }
+            `}
+        />
+    );
+}
+
+export function CentralizarConteudo(){
+    return (
+        <Global
+            styles={css`
+                body {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center; 
                 }
             `}
         />
