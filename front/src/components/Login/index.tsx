@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useQuery } from "react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CentralizarConteudo } from "../../globalStyles";
 import BotaoSimples from "../UI/Botoes/Simples";
 import Campo from "../UI/Campos";
@@ -9,6 +9,7 @@ import { CampoTiposConteudo, CampoTiposLayout } from "../UI/Campos/entradas";
 import { Container, ContainerBotoesAcao, ContainerCadastre, Logo } from "./styles";
 
 export default function LoginComponent(){
+    const navigate = useNavigate();
     const [inputs, setInputs] = useState({});
 
     const handleChange = (event: any) => {
@@ -21,6 +22,7 @@ export default function LoginComponent(){
         event.preventDefault();
         const { data } = await axios.post('http://127.0.0.1:5000/login', inputs);
         localStorage.setItem('token', data.token);
+        navigate('/home');
     }
 
     return (

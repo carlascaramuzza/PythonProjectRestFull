@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { CentralizarConteudo } from "../../../globalStyles";
 import BotaoSimples from "../../UI/Botoes/Simples";
 import Campo from "../../UI/Campos";
@@ -6,6 +7,15 @@ import CadastroEnderecoComponent from "../Endereco";
 import { Cabecalho, Container, ContainerBotoesAcao, ContainerCampos, ContainerLinha, Logo, Titulo } from "./styles";
 
 export default function CadastroUsuarioComponent(){
+    const navigate = useNavigate();
+    const aoConfirmar = () => {
+        navigate("/login");
+    }
+
+    const aoCancelar = () => {
+        navigate("/login");
+    }
+
     return <>
         <CentralizarConteudo />
         <Container>
@@ -29,8 +39,8 @@ export default function CadastroUsuarioComponent(){
                 </ContainerLinha>
             </ContainerCampos>
             <ContainerBotoesAcao>
-                <BotaoSimples rotulo="Confirmar" largura="126px"/>
-                <BotaoSimples rotulo="Cancelar" largura="126px"/>
+                <BotaoSimples onClick={aoConfirmar} rotulo="Confirmar" largura="126px"/>
+                <BotaoSimples onClick={aoCancelar} rotulo="Cancelar" largura="126px"/>
             </ContainerBotoesAcao>
         </Container>
     </>
