@@ -18,6 +18,7 @@ class Usuario(db.Model):
     senha = db.Column(db.String(50))    
     tipo_usuario_id = db.Column(db.Integer(), db.ForeignKey('tipo_usuario.id'))
     tipo_usuario = db.relationship("tipo_usuario", backref="Usuario")
+    data_nascimento = db.Column(db.DateTime)
     def to_json(self):
         return {
             'id': self.id,
@@ -28,7 +29,8 @@ class Usuario(db.Model):
             'telefone': self.telefone,
             'email': self.email,
             'senha' : self.senha,
-            'tipo_usuario' : self.tipo_usuario.nome
+            'tipo_usuario' : self.tipo_usuario.nome,
+            'data_nascimento': self.data_nascimento
         }
 
 class tipo_usuario(db.Model):
@@ -42,6 +44,9 @@ class Endereco(db.Model):
     numero = db.Column(db.Integer)  
     usuario_id = db.Column(db.Integer(), db.ForeignKey('usuario.id'))
     usuario = db.relationship("Usuario", backref="Endereco") 
+    cep = db.Column(db.String(50))
+    estado = db.Column(db.String(2))
+    cidade = db.Column(db.String(255))
 
     def to_json(self):
         return {
@@ -50,13 +55,16 @@ class Endereco(db.Model):
             'bairro': self.bairro,
             'numero': self.numero,           
             'usuario_id': self.usuario.id,
-            'usuario': self.usuario.nome
+            'usuario': self.usuario.nome,
+            'cep': self.cep,
+            'estado': self.estado,
+            'cidade': self.cidade
         }    
 
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key = True)
-    data_pedido = db.Column(db.DateTime)
+    data_pedido = db.Column(db.Date)
     delivery = db.Column(db.Integer)
     valor_total = db.Column(db.Float)
     observacoes = db.Column(db.String(50))
@@ -162,13 +170,16 @@ class Mesa(db.Model):
 class reserva_mesa(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     mesa_id = db.Column(db.Integer, db.ForeignKey('mesa.id'))
+    mesa_nro_lugares = db.relationship("Mesa", backref="reserva_mesa")
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'))
     usuario = db.relationship("Usuario", backref="reserva_mesa")
     data_reserva = db.Column(db.Date)
 
     def to_json_reserva(self):
         return {
+            'id': self.id,
             'mesa_id': self.mesa_id,
+            'mesa_nro_lugares': self.mesa_nro_lugares.qtd_lugares,
             'usuario_id': self.usuario_id,
             'data_reserva': self.data_reserva,
             'usuario': self.usuario.nome

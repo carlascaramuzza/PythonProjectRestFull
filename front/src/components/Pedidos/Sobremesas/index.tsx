@@ -1,18 +1,38 @@
+import axios from "axios";
+import { useQuery } from "react-query";
 import Tabela from "../../UI/Tabela";
-import { criarColunaMoeda, criarColunaSimples, DefinicaoColunaTabela } from "../../UI/Tabela/entradas";
+import { criarColunaAcao, criarColunaMoeda, criarColunaSimples, DefinicaoColunaTabela } from "../../UI/Tabela/entradas";
+import { CategoriasProdutos } from "../types";
 
 const colunas: DefinicaoColunaTabela[] = [
-    criarColunaSimples('descricao', 457),
+    criarColunaSimples('nome', 457),
     criarColunaMoeda('preco' , 131),
-    { field: 'acao', align: 'center', width: 220 },
-];
-
-const linhas = [
-    { id: 1, descricao: 'Bolo de Chocolate', preco: 15.00, acao: 'Adicionar ao carrinho' },
-    { id: 2, descricao: 'Torta de Kiwi', preco: 20.00, acao: 'Adicionar ao carrinho' },
-    { id: 3, descricao: 'Manjar de Coco', preco: 18.00, acao: 'Adicionar ao carrinho' }
+    criarColunaAcao("Adicionar ao carrinho", 220)
 ];
 
 export default function PedidosSobremesas(){
-    return <Tabela colunas={colunas} linhas={linhas} />
+    const { data, isLoading } = useQuery('sobremesas', async () => {
+        const token = localStorage.getItem("token");
+        const { data } = await axios.get('http://127.0.0.1:5000/produtos', {
+            headers: {
+               Authorization: "Bearer " + token
+            }
+         });
+
+        return data.filter((produto: Sobremesas) => produto.categoria_id == CategoriasProdutos.Sobremesas)
+    })
+
+    if(isLoading)
+        return <div>Ta carregando</div>
+
+    return <Tabela colunas={colunas} linhas={data} />
 }
+
+interface Sobremesas{
+    categoria: string;
+    categoria_id: number;
+    id: number;
+    nome: string;
+    preco: number;
+}
+

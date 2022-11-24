@@ -8,11 +8,10 @@ const colunas: DefinicaoColunaTabela[] = [
     criarColunaSimples('nome', 457),
     criarColunaMoeda('preco' , 131),
     criarColunaAcao("Adicionar ao carrinho", 220)
-]
+];
 
-
-export default function PedidosPratosPrincipais(){
-    const { data, isLoading } = useQuery('pratosPrincipais', async () => {
+export default function PedidosPorcoes(){
+    const { data, isLoading } = useQuery('porcoes', async () => {
         const token = localStorage.getItem("token");
         const { data } = await axios.get('http://127.0.0.1:5000/produtos', {
             headers: {
@@ -20,7 +19,7 @@ export default function PedidosPratosPrincipais(){
             }
          });
 
-        return data.filter((produto: PratosPrincipais) => produto.categoria_id == CategoriasProdutos.PratosPrincipais)
+        return data.filter((produto: Porcoes) => produto.categoria_id == CategoriasProdutos.Porcoes)
     })
 
     if(isLoading)
@@ -29,10 +28,11 @@ export default function PedidosPratosPrincipais(){
     return <Tabela colunas={colunas} linhas={data} />
 }
 
-interface PratosPrincipais{
+interface Porcoes{
     categoria: string;
     categoria_id: number;
     id: number;
     nome: string;
     preco: number;
 }
+

@@ -1,23 +1,38 @@
+import axios from "axios";
+import { useQuery } from "react-query";
 import Tabela from "../../UI/Tabela";
 import { criarColunaAcao, criarColunaMoeda, criarColunaSimples, DefinicaoColunaTabela } from "../../UI/Tabela/entradas";
+import { CategoriasProdutos } from "../types";
 
 const colunas: DefinicaoColunaTabela[] = [
-    criarColunaSimples('descricao', 457),
+    criarColunaSimples('nome', 457),
     criarColunaMoeda('preco' , 131),
-    criarColunaAcao('Adicionar ao carrinho', 220)
-];
-
-const linhas = [
-    { id: 1, descricao: 'Refrigerante 350ml - Coca-Cola', preco: 3.50 },
-    { id: 2, descricao: 'Refrigerante 350ml - Sprite', preco: 3.50 },
-    { id: 3, descricao: 'Refrigerante 350ml - Guaraná Antártica', preco: 3.50 },
-    { id: 4, descricao: 'Água s/ Gás 450ml', preco: 2.00 },
-    { id: 5, descricao: 'Água c/ Gás 450ml', preco: 2.50 },
-    { id: 6, descricao: 'Suco Natural 400ml - Laranja', preco: 6.50 },
-    { id: 7, descricao: 'Suco Natural 400ml - Limão', preco: 6.50 },
-    { id: 8, descricao: 'Refrigerante 2l - Coca-Cola', preco: 10.00 }
+    criarColunaAcao("Adicionar ao carrinho", 220)
 ];
 
 export default function PedidosBebidas(){
-    return <Tabela colunas={colunas} linhas={linhas} />
+    const { data, isLoading } = useQuery('bebidas', async () => {
+        const token = localStorage.getItem("token");
+        const { data } = await axios.get('http://127.0.0.1:5000/produtos', {
+            headers: {
+               Authorization: "Bearer " + token
+            }
+         });
+
+        return data.filter((produto: Bebidas) => produto.categoria_id == CategoriasProdutos.Bebidas)
+    })
+
+    if(isLoading)
+        return <div>Ta carregando</div>
+
+    return <Tabela colunas={colunas} linhas={data} />
 }
+
+interface Bebidas{
+    categoria: string;
+    categoria_id: number;
+    id: number;
+    nome: string;
+    preco: number;
+}
+

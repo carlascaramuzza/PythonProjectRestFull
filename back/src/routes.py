@@ -1,5 +1,6 @@
 
 from flask import Flask, request, jsonify
+
 from sqlalchemy import delete
 
 from config import config as dbConfig
@@ -8,13 +9,93 @@ from flask_mysqldb import MySQL
 
 from app import app 
 
-from models.entidades import item_pedido, Mesa, Pedido, Usuario, reserva_mesa, tipo_usuario, Produto, db
+from models.entidades import item_pedido, Mesa, Pedido, Usuario, reserva_mesa, tipo_usuario, Produto, Endereco, db
 
 import jwt
 
 from datetime import datetime, timedelta
 
 from authentication import jwt_required
+
+#ENDERECO=======================================================================================
+@app.route("/enderecos", methods=["GET"])
+@jwt_required
+def listar_enderecos(current_user):
+    if current_user.tipo_usuario.nome == "administrador":
+        try:
+            enderecos = Endereco.query.all()
+            return jsonify([endereco.to_json() for endereco in enderecos])
+        except Exception as ex:
+            return jsonify({'mensagem': "Error"}) 
+    else:
+        try:
+            enderecos = Endereco.query.filter(current_user.id==Endereco.usuario_id)
+            return jsonify([endereco.to_json() for endereco in enderecos])
+        except Exception as ex:
+            return jsonify({'mensagem': "Error"})
+
+
+@app.route('/enderecos', methods=['POST'])  
+@jwt_required
+def  inserir_endereco(current_user):
+    try:  
+        endereco = Endereco(endereco=request.json['endereco'],bairro=request.json['bairro'],numero=request.json['numero'],
+        usuario_id=current_user.id,cep=request.json['cep'],cidade=request.json['cidade'],estado=request.json['estado'])
+        print(endereco)
+        db.session.add(endereco)  
+        db.session.commit()
+        return jsonify({'mensagem': "ENDERECO CADASTARADO COM SUCESSO"})
+       
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"})   
+
+
+@app.route("/enderecos/<id>", methods=["DELETE"])
+@jwt_required
+def deletar_endereco(id,current_user):   
+    try:
+        endereco = Endereco.query.get(id)
+        if endereco != None:    
+            if current_user.id == endereco.usuario_id:
+                db.session.delete(endereco)  
+                db.session.commit()
+                return jsonify({'mensagem': "ENDERECO DELETADO COM SUCESSO!"})                  
+            else:
+                return jsonify({'mensagem': "SEM PERMISSÃO"}), 403   
+        else:
+            return jsonify({'mensagem': "ESTE ENDERECO NÃO EXISTE!"})  
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"})    
+
+
+@app.route("/enderecos/<id>", methods=["PUT"])
+@jwt_required
+def atualizar_endereco(id, current_user):   
+    try:  
+            enderecos = Endereco.query.get(id)  
+            if current_user.id == enderecos.usuario_id:            
+                endereco = request.json['endereco']
+                bairro = request.json['bairro']
+                cep = request.json['cep']
+                numero = request.json['numero']
+                estado = request.json['estado']
+                cidade = request.json['cidade']                
+                if endereco != None or bairro != None or cep != None or  numero != None or estado != None or cidade != None  :
+                    enderecos.endereco =endereco
+                    enderecos.bairro = bairro
+                    enderecos.cep = cep
+                    enderecos.numero = numero
+                    enderecos.estado = estado
+                    enderecos.cidade = cidade
+                    db.session.commit()
+                    return jsonify({'mensagem': "ENDERECO ALTERADO COM SUCESSO"})
+                else: 
+                    return jsonify({'mensagem': "ERRO NA ALTERAÇÃO DO ENDERECO!"})
+            else:
+                return jsonify({'mensagem': "SEM PERMISSÃO"}), 403          
+    except Exception as ex:
+        return str(ex)   
+
 
 #USUARIOS=======================================================================================
 @app.route("/usuarios", methods=["GET"])
@@ -52,8 +133,7 @@ def listar_usuario(current_user, id):
 
 @app.route('/usuarios', methods=['POST'])   #não esquecer q no front tem q bloquear os campos senha e cpf com nros exato 10 e 11 e telefone 11
 def  inserir_usuario():
-    try:           
-            
+    try:  
             usuario = Usuario(nome=request.json['nome'],username=request.json['username'],genero=request.json['genero'],
             cpf=request.json['cpf'],telefone=request.json['telefone'],email=request.json['email'],senha=request.json['senha'], tipo_usuario_id=2)
             
@@ -67,6 +147,47 @@ def  inserir_usuario():
                 return jsonify({'mensagem': "CPF JÁ EXISTENTE! POR FAVOR INSIRA OUTRO CPF."})
     except Exception as ex:
         return jsonify({'mensagem': "Error"})   
+
+
+@app.route("/usuarios/<id>", methods=["PUT"])
+@jwt_required
+def atualizar_usuario(id, current_user):   
+    try:  
+        usuario = Usuario.query.get(id)  
+        if usuario != None:
+            if current_user.id == usuario.id:            
+                cpf = request.json['cpf']
+                data_nascimento = request.json['data_nascimento']
+                email = request.json['email']
+                genero = request.json['genero']
+                nome = request.json['nome']
+                senha = request.json['senha']
+                telefone = request.json['telefone']
+                username = request.json['username']   
+                if cpf != None or data_nascimento != None or email != None or  genero != None \
+                    or nome != None or senha != None or telefone != None or username != None:
+                    validation = cpf_validacao_current_user(cpf, id)
+                    if validation == 1:
+                        usuario.cpf = cpf                    
+                        usuario.data_nascimento = data_nascimento
+                        usuario.email = email
+                        usuario.genero = genero
+                        usuario.nome = nome
+                        usuario.senha = senha
+                        usuario.telefone = telefone
+                        usuario.username = username
+                        db.session.commit()
+                        return jsonify({'mensagem': "USUARIO ALTERADO COM SUCESSO"})
+                    else: 
+                        return jsonify({'mensagem': "CPF JÁ EXISTENTE! POR FAVOR INSIRA OUTRO CPF."})    
+                else: 
+                    return jsonify({'mensagem': "ERRO NA ALTERAÇÃO DO USUARIO!"})
+            else:
+                return jsonify({'mensagem': "SEM PERMISSÃO"}), 403   
+        else: 
+            return jsonify({'mensagem': "USUARIO NÃO EXISTE!"})           
+    except Exception as ex:
+        return str(ex)   
 
 
 @app.route("/usuarios/<id>", methods=["DELETE"])
@@ -116,6 +237,12 @@ def listar_produtos(current_user):
             return jsonify([produto.to_json() for produto in produtos])
         except Exception as ex:
             return str(ex) 
+# def listar_produtos():    
+#         try:
+#             produtos = Produto.query.all()
+#             return jsonify([produto.to_json() for produto in produtos])
+#         except Exception as ex:
+#             return str(ex) 
 
 @app.route("/produtos/<id>", methods=["PUT"])
 @jwt_required
@@ -192,7 +319,17 @@ def listar_pedidos(current_user):
             pedidos = Pedido.query.filter(Pedido.usuario_id==current_user.id).all()           
             return jsonify([pedido.to_json_list() for pedido in pedidos])
         except Exception as ex:
-            return str(ex) 
+            return str(ex)    
+# def listar_pedidos():  
+#         try:
+#             pedidos = Pedido.query.all()
+#             teste = jsonify([pedido.to_json_list() for pedido in pedidos]) 
+#             print(teste.json)
+#             a = teste.json
+#             print(type(a[0]['data_pedido']))
+#             return teste
+#         except Exception as ex:
+#             return str(ex)    
 
 @app.route("/itens_pedido/<pedido_id>", methods=["GET"])
 @jwt_required
@@ -326,20 +463,28 @@ def deletar_mesa(id,current_user):
 
 #RESRVA DE MESAS=======================================================================================
 @app.route("/reservamesas", methods=["GET"])
-@jwt_required
-def listar_reservamesas(current_user):
-    if current_user.tipo_usuario.nome == "administrador":
-        try:
-            reservas = reserva_mesa.query.all()
-            return jsonify([reserva.to_json_reserva() for reserva in reservas])
-        except Exception as ex:
-            return jsonify({'mensagem': "Error"}), 500
-    else:
-        try:
-            reservas = reserva_mesa.query.filter(reserva_mesa.usuario_id==current_user.id).all()
-            return jsonify([reserva.to_json_reserva() for reserva in reservas])
-        except Exception as ex:
-            return jsonify({'mensagem': "Error"}), 500
+# @jwt_required
+# def listar_reservamesas(current_user):
+#     if current_user.tipo_usuario.nome == "administrador":
+#         try:
+#             reservas = reserva_mesa.query.all()
+#             return jsonify([reserva.to_json_reserva() for reserva in reservas])
+#         except Exception as ex:
+#             return jsonify({'mensagem': "Error"}), 500
+#     else:
+#         try:
+#             reservas = reserva_mesa.query.filter(reserva_mesa.usuario_id==current_user.id).all()
+#             return jsonify([reserva.to_json_reserva() for reserva in reservas])
+#         except Exception as ex:
+#             return jsonify({'mensagem': "Error"}), 500
+def listar_reservamesas():   
+    try:
+        reservas = reserva_mesa.query.all()
+        return jsonify([reserva.to_json_reserva() for reserva in reservas])
+    except Exception as ex:
+        return jsonify({'mensagem': "Error"}), 500
+    
+
 
 
 @app.route('/reservamesas', methods=['POST']) 
@@ -419,6 +564,14 @@ def cpf_validacao(cpf):
         return 1
     else: 
         return None
+
+def cpf_validacao_current_user(cpf, id):   
+    usuarios = Usuario.query.filter(Usuario.cpf==cpf).all()
+    print(len(usuarios))
+    if  len(usuarios) < 1 or (len(usuarios) == 1 and usuarios[0].id == int(id)) :
+        return 1
+    else: 
+        return None        
 
 
 def pagina_nao_encontrada(error):

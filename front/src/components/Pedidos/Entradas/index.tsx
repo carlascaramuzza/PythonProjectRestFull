@@ -1,19 +1,38 @@
+import axios from "axios";
+import { useQuery } from "react-query";
 import Tabela from "../../UI/Tabela";
-import { criarColunaMoeda, criarColunaSimples, DefinicaoColunaTabela } from "../../UI/Tabela/entradas";
+import { criarColunaAcao, criarColunaMoeda, criarColunaSimples, DefinicaoColunaTabela } from "../../UI/Tabela/entradas";
+import { CategoriasProdutos } from "../types";
 
 const colunas: DefinicaoColunaTabela[] = [
-    criarColunaSimples('descricao', 457),
+    criarColunaSimples('nome', 457),
     criarColunaMoeda('preco' , 131),
-    { field: 'acao', align: 'center', width: 220 },
-];
-
-const linhas = [
-    { id: 1, descricao: 'Pãezinhos Caseiros', preco: 7.50, acao: 'Adicionar ao carrinho' },
-    { id: 2, descricao: 'Salada de Batatas', preco: 10.00, acao: 'Adicionar ao carrinho' },
-    { id: 3, descricao: 'Salada Mista', preco: 8.90, acao: 'Adicionar ao carrinho' },
-    { id: 4, descricao: 'Salada de Capeletti', preco: 15.00, acao: 'Adicionar ao carrinho' },
+    criarColunaAcao("Adicionar ao carrinho", 220)
 ];
 
 export default function PedidosEntradas(){
-    return <Tabela colunas={colunas} linhas={linhas} />
+    const { data, isLoading } = useQuery('entradas', async () => {
+        const token = localStorage.getItem("token");
+        const { data } = await axios.get('http://127.0.0.1:5000/produtos', {
+            headers: {
+               Authorization: "Bearer " + token
+            }
+         });
+
+        return data.filter((produto: Entradas) => produto.categoria_id == CategoriasProdutos.Entradas)
+    })
+
+    if(isLoading)
+        return <div>Ta carregando</div>
+
+    return <Tabela colunas={colunas} linhas={data} />
 }
+
+interface Entradas{
+    categoria: string;
+    categoria_id: number;
+    id: number;
+    nome: string;
+    preco: number;
+}
+

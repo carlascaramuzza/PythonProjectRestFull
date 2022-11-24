@@ -15,7 +15,7 @@ export default function CadastroUsuarioComponent(){
             </Cabecalho>
             <ContainerCampos>
                 <ContainerLinha>
-                    <Campo label="Login" layout={CampoTiposLayout.Horizontal} tipo={CampoTiposConteudo.Texto}/>
+                    <Campo label="Nome de Usuario" layout={CampoTiposLayout.Horizontal} tipo={CampoTiposConteudo.Texto}/>
                     <Campo label="Senha" layout={CampoTiposLayout.Horizontal} tipo={CampoTiposConteudo.Senha}/>
                 </ContainerLinha>
                 <ContainerLinha>

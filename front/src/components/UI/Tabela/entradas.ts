@@ -38,13 +38,14 @@ export function criarColunaData(nomePropriedade: string, largura: number): Defin
         field: nomePropriedade,
         width: largura,
         align: 'center',
-        valueFormatter: (params: GridValueFormatterParams<Date>) => {
+        valueFormatter: (params: GridValueFormatterParams<String>) => {
             if (params.value == null) {
               return '';
             }
 
-            const valorFormatado = params.value.toLocaleDateString('pt-BR');
-            return valorFormatado;
+            const valorFormatado =  new Date(params.value.toString().slice(0,-4));
+            const valorFinal = valorFormatado.toLocaleDateString('pt-br');
+            return valorFinal;
         }
     };
 }
