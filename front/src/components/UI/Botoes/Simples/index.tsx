@@ -1,6 +1,6 @@
 import { BotaoSimplesEntradas } from "./entradas";
 import { Botao } from "./styles";
 
-export default function BotaoSimples({rotulo, largura}: BotaoSimplesEntradas){
-    return <Botao largura={largura}>{ rotulo }</Botao>
+export default function BotaoSimples({rotulo, largura, onClick}: BotaoSimplesEntradas){
+    return <Botao onClick={onClick} largura={largura}>{ rotulo }</Botao>
 }

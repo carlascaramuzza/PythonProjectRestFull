@@ -5,6 +5,7 @@ import PedidosLanches from "../../../components/Pedidos/Lanches";
 import PedidosPorcoes from "../../../components/Pedidos/Porcoes";
 import PedidosPratosPrincipais from "../../../components/Pedidos/PratosPrincipais";
 import PedidosSobremesas from "../../../components/Pedidos/Sobremesas";
+import BotaoNavegacao from "../../../components/UI/Botoes/Navegacao";
 import CardTitulo from "../../../components/UI/Cards/CardTitulo";
 import SubTab from "../../../components/UI/Tabs/SubTab";
 
@@ -21,6 +22,7 @@ export default function TelaPedidoCriar(){
                 { rotulo: 'Lanches', conteudo: <PedidosLanches /> },
                 { rotulo: 'Porções', conteudo: <PedidosPorcoes /> }
             ]}/>
+            <BotaoNavegacao rotulo="Fechar pedido" rota="/pedidos/criar" />
         </>
     )
 }
